@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Base Next + Supabase Auth
 
-## Getting Started
+Plantilla reusable para futuros proyectos montados sobre `Next.js + Vercel + Supabase`.
 
-First, run the development server:
+La intención es que esta base resuelva lo transversal:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- autenticación con Supabase
+- callback OAuth / magic link
+- recuperación de contraseña
+- área privada mínima
+- sincronización de perfil
+- documentación y SQL bootstrap
+
+Luego cada nuevo proyecto puede duplicar este repo y montar encima la lógica de negocio específica.
+
+## Qué trae
+
+- landing inicial en `/`
+- login en `/login`
+- callback auth en `/auth/callback`
+- recuperación de contraseña en `/reset-password`
+- dashboard privado en `/dashboard`
+- perfil editable en `/profile`
+- APIs base:
+  - `POST /api/profile/sync`
+  - `GET /api/me`
+  - `PATCH /api/profile`
+
+## Variables de entorno
+
+Crea `.env.local` usando `.env.example`.
+
+Variables principales:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+También se mantienen nombres heredados compatibles:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `NEXT_PUBLIC_SUPABASE_AUTH_URL`
+- `NEXT_PUBLIC_SUPABASE_AUTH_ANON_KEY`
+- `SUPABASE_DATA_URL`
+- `SUPABASE_DATA_SERVICE_ROLE_KEY`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Para redirects públicos:
 
-## Learn More
+```env
+SITE_URL=https://tu-dominio.com
+APP_URL=https://tu-dominio.com
+NEXT_PUBLIC_APP_URL=https://tu-dominio.com
+```
 
-To learn more about Next.js, take a look at the following resources:
+Prioridad práctica:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. `SITE_URL`
+2. `APP_URL`
+3. `NEXT_PUBLIC_APP_URL`
+4. host inferido del request
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## SQL inicial
 
-## Deploy on Vercel
+Ejecuta [`supabase/001_profiles.sql`](/home/dannysilver/dev2026/base-next-supa-auth-app/supabase/001_profiles.sql) en tu proyecto Supabase.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Ese script crea la tabla `profiles`, índices y RLS básica para que la app ya funcione.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Flujo recomendado para duplicar
+
+1. Duplicar este repo.
+2. Configurar variables en Vercel.
+3. Ejecutar el SQL bootstrap en Supabase.
+4. Configurar en `Supabase Auth` las Redirect URLs:
+   - `https://tu-dominio.com/auth/callback`
+   - `https://tu-dominio.com/reset-password`
+5. Probar login y dashboard.
+6. Empezar a sumar tablas, rutas y pantallas del negocio.
+
+## Desarrollo
+
+```bash
+npm install
+npm run dev
+```
+
+## Notas de arquitectura
+
+- `lib/supabase/authClient.ts`: cliente auth para browser
+- `lib/supabase/dataServer.ts`: cliente server con service role
+- `lib/server/requireAuthUser.ts`: validación de bearer token
+- `lib/server/publicAppOrigin.ts`: helper de redirects útil en Vercel
+
+## Qué no incluye a propósito
+
+No copia la lógica de negocio de `deadline-tracker`:
+
+- organizaciones
+- permisos complejos
+- módulos del dominio
+- dashboards de analytics
+- reportes
+
+Eso queda para cada producto construido sobre esta base.
