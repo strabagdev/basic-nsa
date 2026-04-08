@@ -43,3 +43,7 @@ export function hasSupabasePublicEnv() {
 export function getSupabasePublicEnvErrorMessage() {
   return "Faltan NEXT_PUBLIC_SUPABASE_URL y/o NEXT_PUBLIC_SUPABASE_ANON_KEY en las variables públicas.";
 }
+
+export function getPlatformSetupKey() {
+  return read("PLATFORM_SETUP_KEY");
+}

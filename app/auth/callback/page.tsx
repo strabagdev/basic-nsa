@@ -58,7 +58,7 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      const destination = type === "recovery" ? "/reset-password" : "/dashboard";
+      const destination = type === "recovery" ? "/reset-password" : "/select-platform";
       router.replace(destination);
     })();
   }, [missingEnvMessage, router]);

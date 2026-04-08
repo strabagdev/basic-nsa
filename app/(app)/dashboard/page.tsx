@@ -1,31 +1,100 @@
+ "use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabaseAuth } from "@/lib/supabase/authClient";
+
 const cards = [
   {
-    title: "Auth resuelto",
-    description: "Email/password, magic link, callback y cambio de contraseña sobre Supabase Auth.",
+    title: "Identidad global",
+    description: "Supabase Auth sigue siendo el nexo común para login, reset password y validación del usuario.",
   },
   {
-    title: "Perfil sincronizado",
-    description: "Cada sesión puede sincronizar el perfil base hacia la tabla `profiles` con service role.",
+    title: "Acceso por plataforma",
+    description: "Cada producto decide el rol del usuario según memberships y la plataforma activa seleccionada.",
   },
   {
-    title: "Lista para negocio",
-    description: "Desde acá cada proyecto monta sus módulos, tablas, permisos y pantallas específicas.",
+    title: "Kernel replicable",
+    description: "Desde esta base puedes montar superadmin, admins y módulos del negocio sin rearmar auth.",
   },
 ];
 
+type BootstrapResponse = {
+  access?: {
+    active_membership?: {
+      platform_name: string;
+      platform_slug: string;
+      role: string;
+    } | null;
+    memberships?: Array<{ membership_id: string }>;
+  };
+  settings?: {
+    platform_name?: string | null;
+  };
+  profile?: {
+    full_name?: string | null;
+    email?: string | null;
+  };
+};
+
 export default function DashboardPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [bootstrap, setBootstrap] = useState<BootstrapResponse | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabaseAuth.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
+
+      const res = await fetch("/api/app/bootstrap", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = (await res.json().catch(() => ({}))) as BootstrapResponse & { error?: string };
+      if (!res.ok) {
+        setError(json.error || "No se pudo cargar el dashboard.");
+        setLoading(false);
+        return;
+      }
+
+      if (!json.access?.active_membership) {
+        router.replace("/select-platform");
+        return;
+      }
+
+      setBootstrap(json);
+      setLoading(false);
+    })();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center">
+        <div className="card-surface rounded-[28px] px-6 py-5 text-sm text-[var(--muted)]">Cargando dashboard...</div>
+      </main>
+    );
+  }
+
   return (
     <main className="grid gap-6">
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <article className="card-surface rounded-[30px] p-6 sm:p-8">
           <div className="text-[11px] uppercase tracking-[0.24em] text-[var(--muted)]">Dashboard base</div>
           <h1 className="mt-3 max-w-2xl font-mono text-4xl leading-none tracking-[-0.06em]">
-            Punto de partida listo para clonar y adaptar rápido.
+            {bootstrap?.access?.active_membership?.platform_name || "Punto de partida listo para clonar"}
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--muted)] sm:text-base">
-            La intención de esta pantalla no es resolver un negocio específico, sino dejar un espacio privado funcional
-            para probar sesión, conexión con Supabase y navegación inicial apenas se duplica el proyecto.
+            Esta plataforma está activa para{" "}
+            <strong>{bootstrap?.profile?.full_name || bootstrap?.profile?.email || "el usuario actual"}</strong> con
+            rol <strong>{bootstrap?.access?.active_membership?.role || "sin definir"}</strong>. Desde aquí puedes sumar
+            módulos del negocio manteniendo identidad global y permisos locales.
           </p>
+          {error ? <p className="mt-4 text-sm text-[var(--danger)]">{error}</p> : null}
         </article>
 
         <article className="card-surface rounded-[30px] p-6 sm:p-8">
@@ -34,8 +103,8 @@ export default function DashboardPage() {
             {[
               "Variables de entorno cargadas",
               "Tabla profiles creada en Supabase",
-              "Redirect URLs configuradas",
-              "Deploy listo para Vercel",
+              "Kernel de plataformas creado",
+              "Membership activa seleccionada",
             ].map((item) => (
               <div key={item} className="rounded-[18px] border border-[var(--border)] bg-white/82 px-4 py-3 text-sm">
                 {item}

@@ -7,18 +7,30 @@ import { getSupabasePublicEnvErrorMessage, hasSupabasePublicEnv } from "@/lib/en
 import { supabaseAuth } from "@/lib/supabase/authClient";
 
 type MeResponse = {
-  profile: {
+  profile?: {
     id: string;
     email: string;
     full_name: string | null;
     avatar_url: string | null;
     last_seen_at: string | null;
+    active_platform_id: string | null;
   } | null;
+  access?: {
+    active_membership?: {
+      platform_id: string;
+      platform_name: string;
+      role: "super_admin" | "platform_admin" | "platform_user";
+    } | null;
+  };
+  public_status?: {
+    has_platforms: boolean;
+  };
 };
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/profile", label: "Perfil" },
+  { href: "/select-platform", label: "Plataformas" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -30,6 +42,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState("");
   const [fullName, setFullName] = useState<string>("");
+  const [activePlatformName, setActivePlatformName] = useState("");
+  const [activeRole, setActiveRole] = useState<string>("");
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     if (missingEnvMessage) {
@@ -58,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           throw new Error("No se pudo sincronizar el perfil base.");
         }
 
-        const meRes = await fetch("/api/me", {
+        const meRes = await fetch("/api/app/bootstrap", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const meJson = (await meRes.json().catch(() => ({}))) as MeResponse;
@@ -68,7 +83,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
 
         if (!cancelled) {
+          if (!meJson.public_status?.has_platforms) {
+            router.replace("/setup-platform");
+            return;
+          }
+
+          if (!meJson.access?.active_membership?.platform_id && pathname !== "/select-platform") {
+            router.replace("/select-platform");
+            return;
+          }
+
           setFullName(meJson.profile?.full_name || meJson.profile?.email || "");
+          setActivePlatformName(meJson.access?.active_membership?.platform_name || "");
+          setActiveRole(meJson.access?.active_membership?.role || "");
+          setIsSuperAdmin(meJson.access?.active_membership?.role === "super_admin");
           setChecking(false);
         }
       } catch (error) {
@@ -83,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [missingEnvMessage, router]);
+  }, [missingEnvMessage, pathname, router]);
 
   async function signOut() {
     await supabaseAuth.auth.signOut();
@@ -126,7 +154,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <nav className="flex flex-wrap items-center gap-2">
-            {navItems.map((item) => {
+            {[...navItems, ...(isSuperAdmin ? [{ href: "/super-admin", label: "Super admin" }] : [])].map((item) => {
               const active = pathname === item.href;
               return (
                 <Link
@@ -146,7 +174,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-3">
             <div className="rounded-full border border-[var(--border)] bg-white/75 px-4 py-2 text-sm text-[var(--muted)]">
-              {fullName || "Usuario autenticado"}
+              {activePlatformName
+                ? `${activePlatformName} · ${activeRole || "acceso"}`
+                : fullName || "Usuario autenticado"}
             </div>
             <button
               type="button"

@@ -68,7 +68,7 @@ export default function Home() {
           <div className="card-surface rounded-[30px] p-6 sm:p-8">
             <div className="text-sm uppercase tracking-[0.22em] text-[var(--muted)]">Rutas base</div>
             <div className="mt-5 space-y-3">
-              {["/", "/login", "/auth/callback", "/reset-password", "/dashboard", "/profile"].map((route) => (
+              {["/", "/setup-platform", "/login", "/auth/callback", "/select-platform", "/dashboard", "/super-admin", "/profile"].map((route) => (
                 <div key={route} className="rounded-[18px] border border-[var(--border)] bg-white/84 px-4 py-3 font-mono text-sm">
                   {route}
                 </div>
