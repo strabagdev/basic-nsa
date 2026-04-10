@@ -46,18 +46,20 @@ Crea `.env.local` usando `.env.example`.
 Variables principales:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_DATA_URL=https://your-data-project.supabase.co
+SUPABASE_DATA_SERVICE_ROLE_KEY=your-data-service-role-key
+
+NEXT_PUBLIC_SUPABASE_AUTH_URL=https://your-auth-project.supabase.co
+NEXT_PUBLIC_SUPABASE_AUTH_ANON_KEY=your-auth-anon-key
+SUPABASE_AUTH_SERVICE_ROLE_KEY=your-auth-service-role-key
 PLATFORM_SETUP_KEY=change-me
 ```
 
-También se mantienen nombres heredados compatibles:
+También se mantiene soporte para esquema unificado:
 
-- `NEXT_PUBLIC_SUPABASE_AUTH_URL`
-- `NEXT_PUBLIC_SUPABASE_AUTH_ANON_KEY`
-- `SUPABASE_DATA_URL`
-- `SUPABASE_DATA_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
 Para redirects públicos:
 

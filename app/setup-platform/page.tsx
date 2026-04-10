@@ -2,10 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MissingEnvNotice } from "@/components/missing-env-notice";
 
 type PublicStatusResponse = {
   has_platforms?: boolean;
   platform_name?: string | null;
+  env_ready?: boolean;
+  schema_ready?: boolean;
+  missing_requirements?: string[];
   error?: string;
 };
 
@@ -15,6 +19,7 @@ export default function SetupPlatformPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
+  const [missingRequirements, setMissingRequirements] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -40,6 +45,7 @@ export default function SetupPlatformPage() {
         setLoading(false);
         return;
       }
+      setMissingRequirements(Array.isArray(json.missing_requirements) ? json.missing_requirements : []);
       if (json.has_platforms) {
         router.replace("/login");
         return;
@@ -49,6 +55,11 @@ export default function SetupPlatformPage() {
   }, [router]);
 
   async function createPlatform() {
+    if (missingRequirements.length > 0) {
+      setError("Falta configuración de entorno antes de ejecutar el setup.");
+      return;
+    }
+
     if (!canSubmit) {
       setError("Completa todos los campos requeridos.");
       return;
@@ -88,6 +99,17 @@ export default function SetupPlatformPage() {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
         <div className="card-surface rounded-[28px] px-6 py-5 text-sm text-[var(--muted)]">Validando setup inicial...</div>
+      </main>
+    );
+  }
+
+  if (missingRequirements.length > 0) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4 py-6">
+        <MissingEnvNotice
+          title="Setup bloqueado"
+          message={`Antes de crear la plataforma inicial, debes completar esta configuración: ${missingRequirements.join(" · ")}`}
+        />
       </main>
     );
   }

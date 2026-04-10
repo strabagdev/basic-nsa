@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
-import { assertSupabaseServiceEnv } from "@/lib/env";
+import { assertSupabaseAuthAdminEnv } from "@/lib/env";
 
 export function createSupabaseAdminClient() {
-  const { url, serviceRoleKey } = assertSupabaseServiceEnv();
+  const { url, serviceRoleKey } = assertSupabaseAuthAdminEnv();
   return createClient(url, serviceRoleKey, {
     auth: { persistSession: false },
   });

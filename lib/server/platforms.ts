@@ -17,6 +17,19 @@ function extractMessage(error: unknown) {
   return String(error ?? "Unknown error");
 }
 
+export function isMissingPlatformSchemaError(error: unknown) {
+  const message = extractMessage(error).toLowerCase();
+  return (
+    message.includes("does not exist") ||
+    message.includes("could not find the table") ||
+    message.includes("relation") ||
+    message.includes("platform_settings") ||
+    message.includes("platforms") ||
+    message.includes("platform_memberships") ||
+    message.includes("profiles")
+  );
+}
+
 export async function getPublicPlatformStatus() {
   const db = createDataServerClient();
   const [settingsResult, platformCountResult] = await Promise.all([
